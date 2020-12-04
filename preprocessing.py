@@ -31,7 +31,6 @@ def draw_borders(img, contour, corners):
         cv.drawContours(drawing, corners, i, color)
 
     cv.dilate(drawing, None)
-    cv.imshow('Contours', drawing)
 
 
 def recognize_sudoku(img):
@@ -65,5 +64,4 @@ def recognize_sudoku(img):
     mat, w, h = calculation.calc_dimensions(rect)
     perspective_transformed_matrix = cv.getPerspectiveTransform(rect, mat)
     warp = cv.warpPerspective(img, perspective_transformed_matrix, (w, h))
-    cv.imshow('output', warp)
-    cv.waitKey(0)
+    return warp
