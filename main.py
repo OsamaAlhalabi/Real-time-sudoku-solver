@@ -4,4 +4,6 @@ from preprocessing import recognize_sudoku
 if __name__ == "__main__":
     path = 'E:\\5th Year Subjects\OpenCV\imgs2\\sudoku.jpg'
     img = cv.imread(path)
-    recognize_sudoku(img)
+    img = recognize_sudoku(img)
+    cv.imshow('output',img)
+    cv.waitKey(0)

@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import calculation
 
 
 def detect_corners(contours, max_iter=200, coefficient=1):
@@ -52,10 +53,17 @@ def recognize_sudoku(img):
         return img
 
     corners = detect_corners(longest_contour)
-    # draw_borders(img, longest_contour, corners)
+    draw_borders(img, longest_contour, corners)
 
     if corners is None:
         return img
+    rect = calculation.detect_rect_corners(corners)
 
-    cv.imshow('res', img)
+    if calculation.check_rect(rect) is None:
+        return img
+
+    mat, w, h = calculation.calc_dimensions(rect)
+    perspective_transformed_matrix = cv.getPerspectiveTransform(rect, mat)
+    warp = cv.warpPerspective(img, perspective_transformed_matrix, (w, h))
+    cv.imshow('output', warp)
     cv.waitKey(0)
