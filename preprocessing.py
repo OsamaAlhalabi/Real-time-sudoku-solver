@@ -37,7 +37,7 @@ def recognize_sudoku(img):
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     img = cv.GaussianBlur(img, (5, 5), 0)
     img = cv.adaptiveThreshold(img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 11, 2)
-    contours, hierarchy = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    img2, contours, hierarchy = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
     max_area = 0
     longest_contour = None
@@ -58,7 +58,7 @@ def recognize_sudoku(img):
         return img
     rect = calculation.detect_rect_corners(corners)
 
-    if calculation.check_rect(rect) is None:
+    if not calculation.check_rect(rect):
         return img
 
     mat, w, h = calculation.calc_dimensions(rect)
