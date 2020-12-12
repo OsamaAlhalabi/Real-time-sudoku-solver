@@ -5,8 +5,14 @@ if __name__ == "__main__":
     path = r"C:\Users\Nitro\Desktop\imgs\sudoku.jpg"
     img = cv.imread(path)
     img = recognize_sudoku(img)
-    filtered_img = filter_and_repair(img)
-    cells = retrieve_cells(img, filtered_img)
-    # cv.imshow('output', img)
-    # cv.imshow('output1', fimg)
-    # cv.waitKey(0)
+
+    filtered_img, thresh = filter_and_repair(img)
+    sudoku, cells = retrieve_cells(img, thresh)
+
+    cv.imshow('output', img)
+
+    cv.imshow('grid', thresh)
+
+    cv.imshow('filtered', filtered_img)
+
+    cv.waitKey(0)
