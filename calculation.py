@@ -9,7 +9,7 @@ def check_right_angle(angle: float, epsilon: float):
     return abs(angle - 90) < epsilon
 
 
-def side_lengths_are_too_different(u: np.ndarray, v: np.ndarray, t: np.ndarray, n: np.ndarray, eps_scale: float):
+def side_lengths_are_too_different(u: np.array, v: np.array, t: np.array, n: np.array, eps_scale: float):
     uv = np.dot(u - v, u - v)
     un = np.dot(u - n, u - n)
     vt = np.dot(v - t, v - t)
@@ -37,7 +37,7 @@ def check_rect(rect: np.ndarray):
     return True
 
 
-def detect_rect_corners(corners: np.ndarray):
+def detect_rect_corners(corners: np.array):
     rect = np.zeros((4, 2), dtype="float32")
     corners = corners.reshape(4, 2)
 

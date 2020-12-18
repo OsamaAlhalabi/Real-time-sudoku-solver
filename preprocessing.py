@@ -56,7 +56,6 @@ def recognize_sudoku(img):
 
 
 def filter_and_repair(img):
-
     thresh, contours, hierarchy = cv.findContours(img.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
     contours = [c for c in contours if cv.contourArea(c) < 1000]
@@ -65,10 +64,10 @@ def filter_and_repair(img):
 
     # Fix horizontal and vertical lines
     vertical_kernel = cv.getStructuringElement(cv.MORPH_RECT, (1, 5))
-    thresh = cv.morphologyEx(thresh, cv.MORPH_CLOSE, vertical_kernel, iterations=7)
+    thresh = cv.morphologyEx(thresh, cv.MORPH_CLOSE, vertical_kernel, iterations=6)
 
     horizontal_kernel = cv.getStructuringElement(cv.MORPH_RECT, (5, 1))
-    thresh = cv.morphologyEx(thresh, cv.MORPH_CLOSE, horizontal_kernel, iterations=5)
+    thresh = cv.morphologyEx(thresh, cv.MORPH_CLOSE, horizontal_kernel, iterations=4)
 
     return cv.bitwise_or(thresh, img), thresh
 
@@ -115,7 +114,6 @@ def sort_bounding_boxes(bounding_boxes, method='left-to-right'):
 
 
 def retrieve_cells(img, thresh):
-
     invert = 255 - thresh
     _, contours, _ = cv.findContours(invert, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
@@ -132,15 +130,23 @@ def retrieve_cells(img, thresh):
 
     cells = [[img[y: y + h, x: x + w] for x, y, w, h in row_boxes] for row_boxes in sudoku]
 
-    # # Iterate through each box
-    # for row in sudoku:
-    #     for x, y, w, h in row:
-    #         mask = np.zeros(img.shape, dtype=np.uint8)
-    #         cv.rectangle(mask, (x, y), (x + w, y + h), (255, 255, 255), -1)
-    #         result = cv.bitwise_and(img, mask)
-    #         result[mask == 0] = 255
-    #         cv.imshow('result', result)
-    #         cv.waitKey(175)
+    # Iterate through each box
+    for row in sudoku:
+        for x, y, w, h in row:
+            mask = np.zeros(img.shape, dtype=np.uint8)
+            cv.rectangle(mask, (x, y), (x + w, y + h), (255, 255, 255), -1)
+            result = cv.bitwise_and(img, mask)
+            result[mask == 0] = 255
+            cv.imshow('result', result)
+            cv.waitKey(175)
 
     return sudoku, cells
 
+
+def resize(cells, dsize):
+    return [[cv.resize(img, dsize, cv.INTER_NEAREST) for img in row] for row in cells]
+
+
+def filter_empty(inputs):
+    mask = np.array([(cv.countNonZero(img) / (img.shape[0] * img.shape[1])) > 0.18 for img in inputs])
+    return inputs[mask], mask
