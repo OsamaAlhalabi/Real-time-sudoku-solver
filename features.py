@@ -23,10 +23,7 @@ search_params = dict(checks=100)
 # Create the Flann Matcher object
 flann = cv.FlannBasedMatcher(index_params, search_params)
 
-templates = [cv.imread(f'templates/template_{i}.png', 0) for i in range(1, 10)]
-templates = [cv.resize(img, (50, 50), cv.INTER_NEAREST) for img in templates]
-templates = np.array(templates)
-
+templates = np.array([cv.imread(f'templates/template_{i}.png', 0) for i in range(1, 10)])
 
 def extract_hog_features(inputs):
     hog_features = np.array([hog.compute(img, None, None, None) for img in inputs])
@@ -37,29 +34,27 @@ def extract_hog_features(inputs):
 def extract_sift_feature(inputs):
     inputs = [cv.GaussianBlur(img, (3, 3,), None) for img in inputs]
 
-    return [sift.detectAndCompute(img, None) for img in inputs]
+    return np.array([sift.detectAndCompute(img, None) for img in inputs])
 
 
 def extract_fast_feature(inputs):
-    n, w, h = inputs.shape
-    if (w, h) != (128, 128):
-        inputs = [cv.resize(img, (128, 128), cv.INTER_LINEAR) for img in inputs]
-    else:
-        inputs = [cv.GaussianBlur(img, (3, 3,), None) for img in inputs]
+    # inputs = [cv.GaussianBlur(img, (3, 3,), None) for img in inputs]
 
     key_points = [fast.detect(img, None) for img in inputs]
 
     return np.array([brief.compute(img, kp) for img, kp in zip(inputs, key_points)])
 
 
-templates = extract_fast_feature(templates)
+sift_templates = extract_sift_feature(templates)
+
+fast_templates = extract_fast_feature(templates)
 
 
-def match_templates(features):
+def match_templates(features, matching_templates):
     ans = np.zeros((features.shape[0]), dtype=np.uint8)
     for idx, (_, descriptor) in enumerate(features):
         mx = 0
-        for integer, (kp, des) in enumerate(templates):
+        for integer, (kp, des) in enumerate(matching_templates):
             # Obtain matches using K-Nearest Neighbor Method
             # the result 'matches' is the number of similar matches found in both images
             matches = flann.knnMatch(des.astype(np.float32), descriptor.astype(np.float32), k=2)

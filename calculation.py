@@ -14,6 +14,7 @@ def side_lengths_are_too_different(u: np.array, v: np.array, t: np.array, n: np.
     un = np.dot(u - n, u - n)
     vt = np.dot(v - t, v - t)
     tn = np.dot(t - n, t - n)
+
     shortest = min(uv, un, vt, tn)
     longest = max(uv, un, vt, tn)
     return longest > eps_scale * shortest
@@ -30,7 +31,7 @@ def check_rect(rect: np.ndarray):
             if check_right_angle(calc_angle(bc, dc), 20):
                 if check_right_angle(calc_angle(ad, dc), 20):
                     return False
-
+    # check if it is a square grid ..
     if side_lengths_are_too_different(rect[0], rect[1], rect[2], rect[3], 1.44):
         return False
 
@@ -65,7 +66,6 @@ def detect_rect_corners(corners: np.array):
 
 def calc_dimensions(rect):
     u, v, t, n = rect
-
     width = max(int(np.linalg.norm(t - n)), int(np.linalg.norm(u - v)))
 
     height = max(int(np.linalg.norm(v - t)), int(np.linalg.norm(u - n)))
