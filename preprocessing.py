@@ -52,8 +52,8 @@ def recognize_sudoku(img):
 
     rect = calculation.detect_rect_corners(corners)
 
-    if not calculation.check_rect(rect):
-        return img, False
+    # if not calculation.check_rect(rect):
+    #     return img, False
 
     mat, w, h = calculation.calc_dimensions(rect)
     perspective_transformed_matrix = cv.getPerspectiveTransform(rect, mat)
@@ -133,8 +133,8 @@ class GridError(Exception):
 
 
 def fix_cell(cell):
-    cv.rectangle(cell, (0, 0), cell.shape, (0, 0, 0), 15)
-    return cv.resize(cell, (128, 128), cv.INTER_CUBIC)
+    img = cv.resize(cell, (128, 128), cv.INTER_CUBIC)
+    return cv.rectangle(img, (0, 0), img.shape, (0, 0, 0), 15)
 
 
 def retrieve_cells(img, thresh):
@@ -145,11 +145,11 @@ def retrieve_cells(img, thresh):
 
     w, h = invert.shape
 
-    lv_cell_area = (w / 9 - 16) * (h / 9 - 16) + 1e-5
+    cell_area_lower_bound = (w / 9 - 16) * (h / 9 - 16) + 1e-5
 
-    cell_area = w * h / 81 + 1e-5
+    cell_area_upper_bound = w * h / 81 + 1e-5
 
-    contours = [c for c, area in zip(contours, areas) if lv_cell_area < area < cell_area]
+    contours = [c for c, area in zip(contours, areas) if cell_area_lower_bound < area < cell_area_upper_bound]
 
     if len(contours) != 81:
         raise GridError(f'Grid error.\n found {len(contours)} cell only!')
@@ -187,6 +187,7 @@ def retrieve_cells(img, thresh):
     #         cv.rectangle(mask, (x, y), (x + w, y + h), (0, 0, 0), -1)
     #         cv.imshow('result', img | mask)
     #         cv.waitKey(175)
+    # cv.destroyWindow('result')
 
     return sudoku, cells
 
