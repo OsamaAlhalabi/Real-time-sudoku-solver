@@ -49,22 +49,22 @@ def recognize_sudoku(img):
     # longest_contour = contours[np.argmax(areas)]
 
     if longest_contour is None:
-        return img
+        return img, False
     corners = detect_corners(longest_contour)
     draw_borders(img, longest_contour, corners)
 
     if corners is None:
-        return img
+        return img, False
 
     rect = calculation.detect_rect_corners(corners)
 
     if not calculation.check_rect(rect):
-        return img
+        return img, False
 
     mat, w, h = calculation.calc_dimensions(rect)
     perspective_transformed_matrix = cv.getPerspectiveTransform(rect, mat)
     warp = cv.warpPerspective(img, perspective_transformed_matrix, (w, h))
-    return warp
+    return warp, True
 
 
 def filter_and_repair(img):

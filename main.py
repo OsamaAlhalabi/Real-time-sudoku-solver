@@ -22,17 +22,17 @@ if __name__ == "__main__":
     while ret:
         fet, frame = cap.read()
 
-        img = preprocessing.recognize_sudoku(frame)
+        img, rec = preprocessing.recognize_sudoku(frame)
+        if rec is True:
+            img, gird_img = preprocessing.filter_and_repair(img)
 
-        img, gird_img = preprocessing.filter_and_repair(img)
+            sudoku, inputs = preprocessing.retrieve_cells(img, gird_img)
 
-        # sudoku, inputs = preprocessing.retrieve_cells(img, gird_img)
-        #
-        # inputs, mask = preprocessing.filter_empty(inputs.reshape(81, 128, 128))
-        #
-        # fast_features = features.extract_fast_feature(inputs)
-        #
-        # outputs = features.match_templates(fast_features, features.fast_templates)
+            inputs, mask = preprocessing.filter_empty(inputs.reshape(81, 128, 128))
+
+            fast_features = features.extract_fast_feature(inputs)
+
+            outputs = features.match_templates(fast_features, features.fast_templates)
         cv.imshow("inter", img)
         if cv.waitKey(40) == 27:
             break
