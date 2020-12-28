@@ -34,22 +34,16 @@ def recognize_sudoku(img):
     img = cv.adaptiveThreshold(img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 23, 5)
     _, contours, hierarchy = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-    # areas = np.array(list(map(cv.contourArea, contours)))
-    #
-    # if areas is None:
-    #     return img
-    max_area = 0
-    longest_contour = None
-    for c in contours:
-        area = cv.contourArea(c)
-        if area > max_area:
-            max_area = area
-            longest_contour = c
+    areas = list(map(cv.contourArea, contours))
 
-    # longest_contour = contours[np.argmax(areas)]
+    if not areas:
+        return img, None
 
-    if longest_contour is None:
-        return img, False
+    longest_contour = contours[np.argmax(areas)]
+
+    # if longest_contour is None:
+    #     return img, False
+
     corners = detect_corners(longest_contour)
     draw_borders(img, longest_contour, corners)
 
@@ -134,6 +128,11 @@ def sort_bounding_boxes(bounding_boxes, method='left-to-right'):
     return sorted(bounding_boxes, key=lambda obj: obj[i], reverse=reverse)
 
 
+class GridError(Exception):
+    def __init__(self, *args, **kwargs):
+        super(*args, **kwargs)
+
+
 def fix_cell(cell):
     cv.rectangle(cell, (0, 0), cell.shape, (0, 0, 0), 15)
     return cv.resize(cell, (128, 128), cv.INTER_CUBIC)
@@ -152,6 +151,9 @@ def retrieve_cells(img, thresh):
     cell_area = w * h / 81 + 1e-5
 
     contours = [c for c, area in zip(contours, areas) if lv_cell_area < area < cell_area]
+
+    if len(contours) != 81:
+        raise GridError(f'Grid error.\n found {len(contours)} cell only!')
 
     # Sort by top to bottom and each row by left to right
     _, bounding_boxes = sort_contours(contours, method="top-to-bottom")
