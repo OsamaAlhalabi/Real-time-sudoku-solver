@@ -13,7 +13,7 @@ if __name__ == "__main__":
     # path = r"C:\Users\Nitro\Downloads\Compressed\v2_train\image206.jpg"
     # path = r"C:\Users\Nitro\Desktop\1_zHZx0IJiNrLYYqW5lyck_A.png"
 
-    cap = cv.VideoCapture(1)
+    cap = cv.VideoCapture(0)
     if cap.isOpened():
         ret, frame = cap.read()
     else:

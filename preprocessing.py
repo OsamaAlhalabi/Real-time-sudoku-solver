@@ -129,8 +129,7 @@ def sort_bounding_boxes(bounding_boxes, method='left-to-right'):
 
 
 class GridError(Exception):
-    def __init__(self, *args, **kwargs):
-        super(*args, **kwargs)
+    pass
 
 
 def fix_cell(cell):
