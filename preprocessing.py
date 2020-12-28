@@ -34,10 +34,22 @@ def recognize_sudoku(img):
     img = cv.adaptiveThreshold(img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 23, 5)
     _, contours, hierarchy = cv.findContours(img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-    areas = np.array(list(map(cv.contourArea, contours)))
+    # areas = np.array(list(map(cv.contourArea, contours)))
+    #
+    # if areas is None:
+    #     return img
+    max_area = 0
+    longest_contour = None
+    for c in contours:
+        area = cv.contourArea(c)
+        if area > max_area:
+            max_area = area
+            longest_contour = c
 
-    longest_contour = contours[np.argmax(areas)]
+    # longest_contour = contours[np.argmax(areas)]
 
+    if longest_contour is None:
+        return img
     corners = detect_corners(longest_contour)
     draw_borders(img, longest_contour, corners)
 

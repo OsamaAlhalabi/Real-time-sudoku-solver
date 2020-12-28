@@ -51,8 +51,9 @@ def detect_rect_corners(corners: np.array):
 
     max_val_idx = np.argmax(corners_sum)
 
-    rect[2] = corners[max_val_idx]
-    corners = np.delete(corners, max_val_idx, 0)
+    if max_val_idx <= 1:
+        rect[2] = corners[max_val_idx]
+        corners = np.delete(corners, max_val_idx, 0)
 
     if corners[0][0] > corners[1][0]:
         rect[1] = corners[0]
