@@ -1,6 +1,9 @@
 import cv2 as cv
 import numpy as np
 import calculation
+import concurrent.futures as futures
+
+executor = futures.ThreadPoolExecutor(max_workers=8)
 
 
 def detect_corners(contours, max_iter=200, coefficient=1):
@@ -170,25 +173,28 @@ def retrieve_cells(img, thresh):
 
     cells = np.array([[fix_cell(img[y: y + h, x: x + w]) for x, y, w, h in row_boxes] for row_boxes in sudoku])
 
-    np.vsplit
-    for i in range(cells.shape[0]):
-        for j in range(cells.shape[1]):
-            cell = cells[i][j]
-            _, label_img = cv.connectedComponents(cell)
-            flatten = label_img.flatten()
-            uniques, counts = np.unique(flatten[flatten > 0], return_counts=True)
-            if counts.size:
-                color_idx = np.argmax(counts)
-                color = uniques[color_idx]
-                mask = np.zeros_like(label_img, dtype=np.uint8)
-                mask[label_img == color] = 255
-                cv.bitwise_and(cell, mask, cell)
+    def connected_component_filtering(cells_slice):
+        for i in range(cells_slice.shape[0]):
+            for j in range(cells_slice.shape[1]):
+                cell = cells_slice[i][j]
+                _, label_img = cv.connectedComponents(cell)
+                flatten = label_img.flatten()
+                uniques, counts = np.unique(flatten[flatten > 0], return_counts=True)
+                if counts.size:
+                    color_idx = np.argmax(counts)
+                    color = uniques[color_idx]
+                    mask = np.zeros_like(label_img, dtype=np.uint8)
+                    mask[label_img == color] = 255
+                    cv.bitwise_and(cell, mask, cell)
 
-    # for i in range(cells.shape[0]):
-    #     for j in range(cells.shape[1]):
-    #         cell = cells[i][j]
-    #         cv.imshow('cell', cell)
-    #         cv.waitKey(0)
+        return cells_slice
+
+    slices = np.hsplit(cells, 3)
+    slices = np.vsplit(np.concatenate(slices), 3)
+
+    future_objects = [executor.submit(connected_component_filtering, s) for s in slices]
+
+    cells = np.hstack([future.result() for future in future_objects])
 
     # # Iterate through each box
     # for row in sudoku:

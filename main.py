@@ -104,17 +104,12 @@ if __name__ == "__main__":
     #
     # sudoku, inputs = preprocessing.retrieve_cells(img, gird_img)
     #
-    # inputs, mask = preprocessing.filter_empty(inputs.reshape(81, 128, 128))
+    # inputs, mask = preprocessing.filter_empty(inputs)
     #
-    # fast_features = features.extract_fast_feature(255 - inputs)
+    # outputs = features.predict(inputs, blur=False)
     #
-    # outputs = features.match_templates(fast_features, features.fast_templates)
-    #
-    # for img, (kp, _), integer in zip(255 - inputs, fast_features, outputs):
-    #     img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
-    #     img = cv.drawKeypoints(img, kp, None, color=(0, 255, 0))
-    #     print(integer)
-    #     cv.imshow('cell', img)
-    #     cv.waitKey(0)
+    # print(outputs)
     #
     # cv.destroyAllWindows()
+    # features.executor.shutdown()
+    # preprocessing.executor.shutdown()
