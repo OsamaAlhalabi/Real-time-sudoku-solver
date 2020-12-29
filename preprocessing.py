@@ -152,7 +152,7 @@ def retrieve_cells(img, thresh):
     contours = [c for c, area in zip(contours, areas) if cell_area_lower_bound < area < cell_area_upper_bound]
 
     if len(contours) != 81:
-        raise GridError(f'Grid error.\n found {len(contours)} cell only!')
+        raise GridError(f'Grid error. found {len(contours)} cell only!')
 
     # Sort by top to bottom and each row by left to right
     _, bounding_boxes = sort_contours(contours, method="top-to-bottom")
