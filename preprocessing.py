@@ -143,11 +143,20 @@ def retrieve_cells(img, thresh):
 
     areas = list(map(cv.contourArea, contours))
 
+    # peris = [cv.arcLength(c, True) for c in contours]
+    #
+    # approxs = [cv.approxPolyDP(c, 0.017 * peri, True) for c, peri in zip(contours, peris)]
+
     w, h = invert.shape
+
+    # img_area = w * h
 
     cell_area_lower_bound = (w / 9 - 16) * (h / 9 - 16) + 1e-5
 
     cell_area_upper_bound = w * h / 81 + 1e-5
+
+    # contours = [c for c, area, approx in zip(contours, areas, approxs)
+    #             if 0.0001 < area / img_area < 0.02 and len(approx) == 4]
 
     contours = [c for c, area in zip(contours, areas) if cell_area_lower_bound < area < cell_area_upper_bound]
 

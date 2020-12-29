@@ -38,7 +38,7 @@ templates = np.array([cv.imread(f'templates/template_{i}.png', 0) for i in range
 # k_sift = 9
 
 # clf = load_model('digits_clf.h5')
-executor = futures.ThreadPoolExecutor(max_workers=2)
+executor = futures.ThreadPoolExecutor(max_workers=4)
 
 
 def extract_hog_features(inputs, blur=True):
@@ -108,10 +108,24 @@ def match_templates(features, matching_templates):
 
     n = features.shape[0]
 
-    future1 = executor.submit(match, features[0: n // 2])
-    future2 = executor.submit(match, features[n // 2:])
+    future1 = executor.submit(match, features[: n // 3])
+    future2 = executor.submit(match, features[n // 3: 2 * n // 3])
+    future3 = executor.submit(match, features[2 * n // 3:])
 
-    return np.hstack([future1.result(), future2.result()])
+    return np.hstack([future1.result(), future2.result(), future3.result()])
+
+
+def predict(inputs, blur=True):
+    n = inputs.shape[0]
+    future1 = executor.submit(extract_fast_feature, inputs[: n // 3], blur)
+    future2 = executor.submit(extract_fast_feature, inputs[n // 3: 2 * n // 3], blur)
+    future3 = executor.submit(extract_fast_feature, inputs[2 * n // 3:], blur)
+
+    future4 = executor.submit(match_templates, future1.result(), fast_templates)
+    future5 = executor.submit(match_templates, future2.result(), fast_templates)
+    future6 = executor.submit(match_templates, future3.result(), fast_templates)
+
+    return np.hstack([future4.result(), future5.result(), future6.result()])
 
 
 # def extract_encoded_fast_feature(inputs, blur=True):

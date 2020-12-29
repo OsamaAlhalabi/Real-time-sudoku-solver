@@ -1,3 +1,5 @@
+import time
+
 import cv2 as cv
 import numpy as np
 import preprocessing
@@ -5,6 +7,9 @@ import features
 import logging
 
 from sklearn.metrics import accuracy_score
+from pySudoku import solve
+
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     w, h = 1280, 1024
@@ -19,11 +24,14 @@ if __name__ == "__main__":
             frame = np.zeros((w, h))
         ground_truth = np.array([6, 2, 5, 9, 7, 1, 2, 3, 5, 7, 2, 1, 4, 8, 9, 3, 9, 7, 6, 5, 1, 8, 1])
 
-        total_matching_features = np.array([(np.concatenate([fast_kp, sift_kp]), np.concatenate([fast_des, sift_des]))
-                                            for (fast_kp, fast_des), (sift_kp, sift_des) in zip(features.fast_templates,
-                                                                                                features.sift_templates)
-                                            ]
-                                           )
+        # total_matching_features = np.array([(np.concatenate([fast_kp, sift_kp]), np.concatenate([fast_des, sift_des]))
+        #                                     for (fast_kp, fast_des), (sift_kp, sift_des) in zip(features.fast_templates,
+        #                                                                                         features.sift_templates)
+        #                                     ]
+        #                                    )
+
+        prev_frame_time = 0
+        new_frame_time = 0
         while ret:
             img, rec = preprocessing.recognize_sudoku(frame)
             if rec is True:
@@ -32,32 +40,46 @@ if __name__ == "__main__":
 
                     sudoku, inputs = preprocessing.retrieve_cells(filtered, grid_img)
 
+                    sudoku_grid = np.zeros((9, 9), dtype=np.uint8)
+
                     inputs, mask = preprocessing.filter_empty(inputs.reshape(81, 128, 128))
 
                     # orb_features = features.extract_orb_feature(inputs)
                     #
                     # outputs = features.match_templates(orb_features, features.orb_templates)
 
-                    fast_features = features.extract_fast_feature(inputs, blur=False)
+                    # sift_features = features.extract_sift_feature(inputs, blur=False)
 
-                    sift_features = features.extract_sift_feature(inputs, blur=False)
+                    # total_features = np.array(
+                    #     [(np.concatenate([fast_kp, sift_kp]), np.concatenate([fast_des, sift_des]))
+                    #      for (fast_kp, fast_des), (sift_kp, sift_des) in zip(fast_features,
+                    #                                                          sift_features)])
 
-                    total_features = np.array(
-                        [(np.concatenate([fast_kp, sift_kp]), np.concatenate([fast_des, sift_des]))
-                         for (fast_kp, fast_des), (sift_kp, sift_des) in zip(fast_features,
-                                                                             sift_features)])
-                    outputs = features.match_templates(total_features, total_matching_features)
+                    # outputs = features.match_templates(total_features, total_matching_features)
 
-                    # print(inputs.shape[0], ground_truth.shape[0])
+                    outputs = features.predict(inputs, False)
 
-                    print(accuracy_score(y_true=ground_truth, y_pred=outputs) * 100)
+                    # where = np.where(~mask)
+                    #
+                    # sudoku[where] = outputs
+                    #
+                    # solve(sudoku)
+                    #
+                    # print(solve(sudoku))
+                    logging.info(f'accuracy: {accuracy_score(ground_truth, outputs)}')
 
                 except preprocessing.GridError as e:
                     logging.error(e)
 
+            new_frame_time = time.time()
+            fps = 1 // (new_frame_time - prev_frame_time)
+            prev_frame_time = new_frame_time
+
+            logging.info(f'fps: {fps}')
+
             cv.imshow("processed image", img)
 
-            if cv.waitKey(40) & 0xFF == ord('q'):
+            if cv.waitKey(1) & 0xFF == ord('q'):
                 break
 
             ret, frame = cap.read()
