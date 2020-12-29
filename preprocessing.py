@@ -170,6 +170,7 @@ def retrieve_cells(img, thresh):
 
     cells = np.array([[fix_cell(img[y: y + h, x: x + w]) for x, y, w, h in row_boxes] for row_boxes in sudoku])
 
+    np.vsplit
     for i in range(cells.shape[0]):
         for j in range(cells.shape[1]):
             cell = cells[i][j]

@@ -106,26 +106,21 @@ def match_templates(features, matching_templates):
                     ans[idx] = integer + 1
         return ans
 
-    n = features.shape[0]
+    slices = np.array_split(features, 3)
 
-    future1 = executor.submit(match, features[: n // 3])
-    future2 = executor.submit(match, features[n // 3: 2 * n // 3])
-    future3 = executor.submit(match, features[2 * n // 3:])
+    future_objects = [executor.submit(match, s) for s in slices]
 
-    return np.hstack([future1.result(), future2.result(), future3.result()])
+    return np.hstack([future.result() for future in future_objects])
 
 
 def predict(inputs, blur=True):
-    n = inputs.shape[0]
-    future1 = executor.submit(extract_fast_feature, inputs[: n // 3], blur)
-    future2 = executor.submit(extract_fast_feature, inputs[n // 3: 2 * n // 3], blur)
-    future3 = executor.submit(extract_fast_feature, inputs[2 * n // 3:], blur)
+    slices = np.array_split(inputs, 3)
 
-    future4 = executor.submit(match_templates, future1.result(), fast_templates)
-    future5 = executor.submit(match_templates, future2.result(), fast_templates)
-    future6 = executor.submit(match_templates, future3.result(), fast_templates)
+    future_objects = [executor.submit(extract_fast_feature, s, blur) for s in slices]
 
-    return np.hstack([future4.result(), future5.result(), future6.result()])
+    future_objects = [executor.submit(match_templates, future.result(), fast_templates) for future in future_objects]
+
+    return np.hstack([future.result() for future in future_objects])
 
 
 # def extract_encoded_fast_feature(inputs, blur=True):
