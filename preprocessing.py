@@ -146,22 +146,22 @@ def retrieve_cells(img, thresh):
 
     areas = list(map(cv.contourArea, contours))
 
-    # peris = [cv.arcLength(c, True) for c in contours]
-    #
-    # approxs = [cv.approxPolyDP(c, 0.017 * peri, True) for c, peri in zip(contours, peris)]
+    peris = [cv.arcLength(c, True) for c in contours]
+
+    approxs = [cv.approxPolyDP(c, 0.017 * peri, True) for c, peri in zip(contours, peris)]
 
     w, h = invert.shape
 
-    # img_area = w * h
+    img_area = w * h
 
-    cell_area_lower_bound = (w / 9 - 16) * (h / 9 - 16) + 1e-5
+    # cell_area_lower_bound = (w / 9 - 16) * (h / 9 - 16) + 1e-5
+    #
+    # cell_area_upper_bound = w * h / 81 + 1e-5
 
-    cell_area_upper_bound = w * h / 81 + 1e-5
+    contours = [c for c, area, approx in zip(contours, areas, approxs)
+                if 0.0001 < area / img_area < 0.02 and len(approx) == 4]
 
-    # contours = [c for c, area, approx in zip(contours, areas, approxs)
-    #             if 0.0001 < area / img_area < 0.02 and len(approx) == 4]
-
-    contours = [c for c, area in zip(contours, areas) if cell_area_lower_bound < area < cell_area_upper_bound]
+    # contours = [c for c, area in zip(contours, areas) if cell_area_lower_bound < area < cell_area_upper_bound]
 
     if len(contours) != 81:
         raise GridError(f'Grid error. found {len(contours)} cell only!')
@@ -174,9 +174,8 @@ def retrieve_cells(img, thresh):
     cells = np.array([[fix_cell(img[y: y + h, x: x + w]) for x, y, w, h in row_boxes] for row_boxes in sudoku])
 
     def connected_component_filtering(cells_slice):
-        for i in range(cells_slice.shape[0]):
-            for j in range(cells_slice.shape[1]):
-                cell = cells_slice[i][j]
+        for row in cells_slice:
+            for cell in row:
                 _, label_img = cv.connectedComponents(cell)
                 flatten = label_img.flatten()
                 uniques, counts = np.unique(flatten[flatten > 0], return_counts=True)
@@ -189,12 +188,14 @@ def retrieve_cells(img, thresh):
 
         return cells_slice
 
-    slices = np.hsplit(cells, 3)
-    slices = np.vsplit(np.concatenate(slices), 3)
+    splits = np.hsplit(cells, 3)
+    splits = np.vsplit(np.concatenate(splits), 9)
 
-    future_objects = [executor.submit(connected_component_filtering, s) for s in slices]
+    future_objects = [executor.submit(connected_component_filtering, s) for s in splits]
 
-    cells = np.hstack([future.result() for future in future_objects])
+    cells = np.vstack([future.result() for future in future_objects])
+
+    cells = np.hstack(np.split(cells, 3))
 
     # # Iterate through each box
     # for row in sudoku:
@@ -209,5 +210,13 @@ def retrieve_cells(img, thresh):
 
 
 def filter_empty(inputs):
-    mask = np.array([(cv.countNonZero(img) / (img.shape[0] * img.shape[1])) > 0.05 for img in inputs])
-    return inputs[mask], mask
+    slices = np.array_split(inputs, 9)
+
+    def filtering(inputs_slice):
+        mask = np.array([(cv.countNonZero(img) / (img.shape[0] * img.shape[1])) > 0.05 for img in inputs_slice])
+        return inputs_slice[mask], mask
+
+    future_objects = [executor.submit(filtering, s) for s in slices]
+    ret = np.vstack([future.result()[0] for future in future_objects])
+    ret_mask = np.vstack([future.result()[1] for future in future_objects])
+    return ret, ret_mask
