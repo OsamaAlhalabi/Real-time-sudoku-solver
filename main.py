@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     w, h = 1280, 1024
-    cap = cv.VideoCapture(0)
+    cap = cv.VideoCapture(1)
     try:
         if cap.isOpened():
             cap.set(cv.CAP_PROP_FRAME_WIDTH, w)
@@ -26,31 +26,37 @@ if __name__ == "__main__":
 
         prev_frame_time = 0
         new_frame_time = 0
+        solved_grid = np.zeros((w, h))
         while ret:
-            img, rec = preprocessing.recognize_sudoku(frame)
-            if rec is True:
+            img, fuc = preprocessing.recognize_sudoku(frame)
+            write_solution = np.copy(img)
+            try:
+                filtered, grid_img = preprocessing.filter_and_repair(img)
+
+                sudoku, inputs = preprocessing.retrieve_cells(filtered, grid_img)
+
+                sudoku_grid = np.zeros((9, 9), dtype=np.uint8)
+
+                inputs, mask = preprocessing.filter_empty(inputs.reshape(81, 64, 64))
+
+                outputs = features.predict(inputs, False)
                 try:
-                    filtered, grid_img = preprocessing.filter_and_repair(img)
-
-                    sudoku, inputs = preprocessing.retrieve_cells(filtered, grid_img)
-
-                    sudoku_grid = np.zeros((9, 9), dtype=np.uint8)
-
-                    inputs, mask = preprocessing.filter_empty(inputs.reshape(81, 64, 64))
-
-                    outputs = features.predict(inputs, False)
-
-                    try:
-                        logging.info(f'accuracy: {accuracy_score(ground_truth, outputs)}')
-                    except ValueError as e:
-                        logging.error(e)
-
-                    sudoku_grid[mask] = outputs
-
-                    print(solve(sudoku_grid))
-
-                except preprocessing.GridError as e:
+                    logging.info(f'accuracy: {accuracy_score(ground_truth, outputs)}')
+                except ValueError as e:
                     logging.error(e)
+
+                sudoku_grid[mask] = outputs
+
+                solved = solve(sudoku_grid)
+
+                write_solution = preprocessing.write_solution_on_image(write_solution, solved, mask)
+
+                solved_grid = cv.warpPerspective(write_solution, fuc,
+                                                 (frame.shape[1], frame.shape[0])
+                                                 , flags=cv.WARP_INVERSE_MAP)
+
+            except preprocessing.GridError as e:
+                logging.error(e)
 
             new_frame_time = time.time()
             fps = 1 // (new_frame_time - prev_frame_time)
@@ -58,7 +64,8 @@ if __name__ == "__main__":
 
             logging.info(f'fps: {fps}')
 
-            cv.imshow("processed image", img)
+            # solved_grid = np.where(solved_grid.sum(axis=-1, keepdims=True) != 0, solved_grid, frame)
+            cv.imshow("processed image", solved_grid)
 
             if cv.waitKey(1) & 0xFF == ord('q'):
                 break

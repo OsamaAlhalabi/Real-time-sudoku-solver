@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 import calculation
 import concurrent.futures as futures
+import math
 
 executor = futures.ThreadPoolExecutor(max_workers=8)
 
@@ -61,17 +62,40 @@ def recognize_sudoku(img):
     mat, w, h = calculation.calc_dimensions(rect)
     perspective_transformed_matrix = cv.getPerspectiveTransform(rect, mat)
     warp = cv.warpPerspective(img, perspective_transformed_matrix, (w, h))
-    return warp, True
+
+    return warp, perspective_transformed_matrix
+
+
+def write_solution_on_image(image, grid, mask):
+    width = image.shape[1] // 9
+    height = image.shape[0] // 9
+    for i in range(9):
+        for j in range(9):
+            if mask[i][j]:
+                continue
+            text = str(grid[i][j])
+            off_set_x = width // 15
+            off_set_y = height // 15
+
+            (text_height, text_width), base_line = cv.getTextSize(text, cv.FONT_HERSHEY_SIMPLEX,
+                                                                  fontScale=1, thickness=3)
+            font_scale = 0.6 * min(width, height) / max(text_height, text_width)
+            text_height *= font_scale
+            text_width *= font_scale
+            bottom_left_corner_x = width * j + math.floor((width - text_width) / 2) + off_set_x
+            bottom_left_corner_y = height * (i + 1) - math.floor((height - text_height) / 2) + off_set_y
+            img = cv.putText(image, text, (bottom_left_corner_x, bottom_left_corner_y),
+                             cv.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), thickness=3, lineType=cv.LINE_AA)
+    return img
 
 
 def filter_and_repair(img):
-
     kernel = cv.getStructuringElement(cv.MORPH_RECT, (3, 3))
     thresh = cv.morphologyEx(img, cv.MORPH_CLOSE, kernel)
 
     thresh, contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
     w, h = img.shape
-    cell_area = (w/9 - 16) * (h/9 - 16) + 1e-5
+    cell_area = (w / 9 - 16) * (h / 9 - 16) + 1e-5
 
     contours = [c for c in contours if cv.contourArea(c) < cell_area]
 
