@@ -36,22 +36,18 @@ if __name__ == "__main__":
 
                     sudoku_grid = np.zeros((9, 9), dtype=np.uint8)
 
-                    inputs, mask = preprocessing.filter_empty(inputs.reshape(81, 128, 128))
+                    inputs, mask = preprocessing.filter_empty(inputs.reshape(81, 64, 64))
 
                     outputs = features.predict(inputs, False)
 
-                    # where = np.where(~mask)
-                    #
-                    # sudoku[where] = outputs
-                    #
-                    # solve(sudoku)
-                    #
-                    # print(solve(sudoku))
-                    # print(outputs)
                     try:
                         logging.info(f'accuracy: {accuracy_score(ground_truth, outputs)}')
-                    except ValueError:
-                        pass
+                    except ValueError as e:
+                        logging.error(e)
+
+                    sudoku_grid[mask] = outputs
+
+                    print(solve(sudoku_grid))
 
                 except preprocessing.GridError as e:
                     logging.error(e)
@@ -74,12 +70,12 @@ if __name__ == "__main__":
         features.executor.shutdown()
         preprocessing.executor.shutdown()
     # # path = r"C:\Users\Nitro\Desktop\imgs\sudoku.jpg"
-    # path = r"C:\Users\Nitro\Downloads\Compressed\v2_train\image1087.jpg"
+    # # path = r"C:\Users\Nitro\Downloads\Compressed\v2_train\image1087.jpg"
     # # path = r"C:\Users\Nitro\Downloads\Compressed\v2_train\image1070.jpg"
     # # path = r"C:\Users\Nitro\Downloads\Compressed\v2_train\image1062.jpg"
     # # path = r"C:\Users\Nitro\Downloads\Compressed\v2_train\image1086.jpg"
     # # path = r"C:\Users\Nitro\Downloads\Compressed\v2_train\image1011.jpg"
-    # # path = r"C:\Users\Nitro\Downloads\Compressed\v2_train\image1008.jpg"
+    # path = r"C:\Users\Nitro\Downloads\Compressed\v2_train\image1008.jpg"
     # # path = r"C:\Users\Nitro\Downloads\Compressed\v2_train\image206.jpg"
     # # path = r"C:\Users\Nitro\Desktop\1_zHZx0IJiNrLYYqW5lyck_A.png"
     # img = cv.imread(path)
@@ -89,11 +85,15 @@ if __name__ == "__main__":
     # img, gird_img = preprocessing.filter_and_repair(img)
     #
     # sudoku, inputs = preprocessing.retrieve_cells(img, gird_img)
-    # inputs, mask = preprocessing.filter_empty(inputs.reshape(81, 128, 128))
     #
-    # outputs = features.predict(inputs, blur=False)
+    # inputs, mask = preprocessing.filter_empty(inputs.reshape(81, 64, 64))
     #
-    # print(outputs)
+    # # outputs = features.predict(inputs, blur=False)
+    # #
+    # # print(outputs)
+    #
+    # for i, img in enumerate(inputs):
+    #     cv.imwrite(f'cell_{i}.png', img)
     #
     # cv.destroyAllWindows()
     # features.executor.shutdown()

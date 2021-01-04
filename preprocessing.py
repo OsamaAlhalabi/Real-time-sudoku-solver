@@ -136,8 +136,8 @@ class GridError(Exception):
 
 
 def fix_cell(cell):
-    img = cv.resize(cell, (128, 128), cv.INTER_CUBIC)
-    return cv.rectangle(img, (0, 0), img.shape, (0, 0, 0), 15)
+    img = cv.resize(cell, (64, 64), cv.INTER_CUBIC)
+    return cv.rectangle(img, (0, 0), img.shape, (0, 0, 0), 7)
 
 
 def retrieve_cells(img, thresh):
