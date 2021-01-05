@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 import calculation
 import concurrent.futures as futures
-import math
+
 
 executor = futures.ThreadPoolExecutor(max_workers=8)
 
@@ -66,25 +66,27 @@ def recognize_sudoku(img):
     return warp, perspective_transformed_matrix
 
 
-def write_solution_on_image(image, grid, mask):
-    width = image.shape[1] // 9
-    height = image.shape[0] // 9
-    for i in range(9):
-        for j in range(9):
-            if mask[i][j]:
+def write_solution_on_image(sudoku, grid, solution, mask):
+    img = np.zeros_like(grid)
+    for r1, r2, r3 in zip(sudoku, solution, mask):
+        for c1, c2, c3 in zip(r1, r2, r3):
+            if c3:
                 continue
-            text = str(grid[i][j])
+            text = str(c2)
+            x, y, width, height = c1
             off_set_x = width // 15
             off_set_y = height // 15
 
-            (text_height, text_width), base_line = cv.getTextSize(text, cv.FONT_HERSHEY_SIMPLEX,
-                                                                  fontScale=1, thickness=3)
+            (text_height, text_width), _ = cv.getTextSize(text, cv.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=3)
+
             font_scale = 0.6 * min(width, height) / max(text_height, text_width)
             text_height *= font_scale
             text_width *= font_scale
-            bottom_left_corner_x = width * j + math.floor((width - text_width) / 2) + off_set_x
-            bottom_left_corner_y = height * (i + 1) - math.floor((height - text_height) / 2) + off_set_y
-            img = cv.putText(image, text, (bottom_left_corner_x, bottom_left_corner_y),
+
+            off_set_x = off_set_x + int((width - text_width) // 2)
+            off_set_y = off_set_y + int((height + text_height) // 2)
+
+            img = cv.putText(grid, text, (x + off_set_x, y + off_set_y),
                              cv.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), thickness=3, lineType=cv.LINE_AA)
     return img
 

@@ -93,17 +93,20 @@ def match_templates(features, matching_templates):
             for integer, (kp, des) in enumerate(matching_templates):
                 # Obtain matches using K-Nearest Neighbor Method
                 # the result 'matches' is the number of similar matches found in both images
-                matches = flann.knnMatch(des.astype(np.float32), descriptor.astype(np.float32), k=2)
+                try:
+                    matches = flann.knnMatch(des.astype(np.float32), descriptor.astype(np.float32), k=2)
 
-                # Store good matches using Lowe's ratio test
-                good_matches = 0
-                for u, v in matches:
-                    if u.distance < 0.7 * v.distance:
-                        good_matches += 1
+                    # Store good matches using Lowe's ratio test
+                    good_matches = 0
+                    for u, v in matches:
+                        if u.distance < 0.7 * v.distance:
+                            good_matches += 1
 
-                if mx < good_matches:
-                    mx = good_matches
-                    ans[idx] = integer + 1
+                    if mx < good_matches:
+                        mx = good_matches
+                        ans[idx] = integer + 1
+                except Exception:
+                    pass
         return ans
 
     slices = np.array_split(features, 3)
