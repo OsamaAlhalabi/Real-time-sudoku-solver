@@ -18,6 +18,7 @@ if __name__ == "__main__":
         if cap.isOpened():
             cap.set(cv.CAP_PROP_FRAME_WIDTH, w)
             cap.set(cv.CAP_PROP_FRAME_HEIGHT, h)
+            _, frame0 = cap.read()
             _, frame1 = cap.read()
             ret, frame2 = cap.read()
         else:
